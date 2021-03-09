@@ -1,0 +1,16 @@
+syntax = 'proto3';
+
+message PipelineConfig {
+  string blueprint = 1;  //complete blueprint.json as text
+  string dockerinfo = 2; //complete dockerinfo.json as text
+  bytes protoszip = 3; //zip file of protos as binary
+}
+
+message PipelineStatus {
+  int32 statusCode = 1;  //very similar to http status codes: 200 should be "OK / success"
+  string statusText = 2; //should contain "success and the result" or the detailed exception text
+}
+
+service start_orchestrator {
+	rpc executePipeline(PipelineConfig) returns(PipelineStatus);
+}

@@ -1,0 +1,58 @@
+{
+  "name": "simplepipeline",
+  "version": "v1",
+  "input_ports": [
+    {
+      "container_name": "csvdatabroker1",
+      "operation_signature": {
+        "operation_name": "get_next_row"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "container_name": "csvdatabroker1",
+      "node_type": "MLModel",
+      "image": "https://cicd.ai4eu-dev.eu:7444/csvdatabroker:v2",
+      "proto_uri": "org/acumos/909144f1-59a2-42b8-91cf-4b419fe126b2/csvdatabroker/1.0.1/csvdatabroker-1.0.1.proto",
+      "operation_signature_list": [
+        {
+          "operation_signature": {
+            "operation_name": "get_next_row",
+            "input_message_name": "Empty",
+            "output_message_name": "Features"
+          },
+          "connected_to": [
+            {
+              "container_name": "houseprice1",
+              "operation_signature": {
+                "operation_name": "predict_sale_price"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "container_name": "houseprice1",
+      "node_type": "MLModel",
+      "image": "https://cicd.ai4eu-dev.eu:7444/houseprice:v1",
+      "proto_uri": "org/acumos/c6bc5abe-6422-47e9-9dcf-c01c1cbb7c48/houseprice/1.0.0/houseprice-1.0.0.proto",
+      "operation_signature_list": [
+        {
+          "operation_signature": {
+            "operation_name": "predict_sale_price",
+            "input_message_name": "Features",
+            "output_message_name": "Prediction"
+          },
+          "connected_to": []
+        }
+      ]
+    }
+  ],
+  "probeIndicator": [
+    {
+      "value": "false"
+    }
+  ]
+}

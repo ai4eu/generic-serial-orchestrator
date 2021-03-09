@@ -1,0 +1,19 @@
+{
+  "docker_info_list": [
+    {
+      "container_name": "csvdatabroker1",
+      "ip_address": "172.17.0.1",
+      "port": "50080"
+    },
+    {
+      "container_name": "houseprice1",
+      "ip_address": "172.17.0.1",
+      "port": "50081"
+    },
+    {
+      "container_name": "modelconnector",
+      "ip_address": "modelconnector",
+      "port": "8555"
+    }
+  ]
+}
