@@ -63,11 +63,9 @@ def get_proto_files():
     proto_files = []
     work_dir = "work_dir"
     lst = os.listdir(work_dir)
-    lst.sort()
     for file in lst:
         if file.endswith(".proto"):
             proto_files.append(file)
-
     return proto_files
 
 
@@ -96,18 +94,20 @@ def executePipeline(blueprint, dockerinfo, protoszip):
         merge_cls = mp.ProtoMerger(proto_files)
         messages, services = merge_cls.prepare_dict()
         proto_path = os.path.join("work_dir" + "/pipeline.proto")
+        merge_cls.prepare_map_service_rpc()
         merge_cls.write_to_merged_proto(messages, services, proto_path)
 
         """generate stubs and skeleton"""
         pc = mp.ProtoComplier()
         pc.generate_pb2_pb2c(proto_path)
 
+        rpc_service_map = merge_cls.rpc_service_map
         try:
             """Call the orchestrator"""
             orchestrator = orch.GenericOrchestrator()
             dockerinfo_path = "work_dir/dockerinfo_gen.json"
             blueprint_path = "work_dir/blueprint_gen.json"
-            orchestrator.execute_pipeline(blueprint_path, dockerinfo_path)
+            orchestrator.execute_pipeline(blueprint_path, dockerinfo_path, rpc_service_map)
             status = 200
             status_msg = "Orchestrator successfully started"
 

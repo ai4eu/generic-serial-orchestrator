@@ -32,6 +32,7 @@ class Node(object):
     input_msg = ""
     output_msg = ""
     port = ""
+    stub = ""
 
 
 class InputNode(object):
@@ -89,7 +90,7 @@ class PipelineReader(object):
         """extract node port information from dockerinfo.json"""
         value6 = json_extract(self.port_info['docker_info_list'][i], "port")
         value7 = json_extract(self.port_info['docker_info_list'][i], "ip_address")
-        #port = "172.17.0.1:" + str(value6[0])
+        # port = "172.17.0.1:" + str(value6[0])
         port = str(value7[0]) + ":" + str(value6[0])
 
         return nodename, protobuf_loc, service_name, input_msg, output_msg, port
@@ -181,6 +182,16 @@ class GenericOrchestrator:
 
         return index_to_return
 
+    def find_stub_for_node(self, stubs, pipeline, p, rpc_service_map):
+
+        #service_list = list(rpc_service_map.values())
+        #break_flag = False
+        for i in range(p.total_Nodes):
+            for j in range(len(stubs)):
+                #stub_str = service_list[j] + "Stub"
+                if rpc_service_map[pipeline[i].service_name] == stubs[j]:
+                    pipeline[i].stub = stubs[j]
+
     def get_all_stubs(self, path):
         """Function to get all the stubs from the combined protofile
         :arg
@@ -188,19 +199,17 @@ class GenericOrchestrator:
         :returns
             stubs(List): List containing the stubs
         """
-
         stubs = []
-        """store all the stubs in a list"""
         for line in open(path, "r"):
             if "Stub" in line:
                 split1 = line.split()
                 split2 = split1[1].split('(')
                 stub_str = split2[0]
                 stubs.append(stub_str)
-
+                # stubs[pipeline[i].node_name] = stub_str
         return stubs
 
-    def start_node(self, i, stubs, pipe_line):
+    def start_node(self, i, pipe_line, p):
         """A generic Function to get port,stub,request and response for each node
         Input: Index of the node
         Output: Port address, stub method, request method, response method"""
@@ -211,7 +220,7 @@ class GenericOrchestrator:
         port = pipe_line[i].port
         channel = grpc.insecure_channel(port)
         # create a stub (client)
-        stub_method = getattr(pb2_grpc, stubs[i])
+        stub_method = getattr(pb2_grpc, pipe_line[i].stub)
         stub = stub_method(channel)
 
         if i == 0:
@@ -225,7 +234,7 @@ class GenericOrchestrator:
 
         return request_method, response_method, response_before_call
 
-    def link_nodes(self, bfs_list, pipe_line, p, stubs, num_nodes, current_node=0, previous_response=None):
+    def link_nodes(self, bfs_list, pipe_line, p, num_nodes, current_node=0, previous_response=None):
         """A Recursive function to link nodes in a pipeline
         :arg
             bfs_list(List): List containing BFS traversal for the graph created
@@ -237,7 +246,7 @@ class GenericOrchestrator:
         """
 
         i = self.find_node_in_pipeline(bfs_list[current_node], pipe_line, p)
-        request_method, response_method, response_before_call = self.start_node(i, stubs, pipe_line)
+        request_method, response_method, response_before_call = self.start_node(i, pipe_line, p)
 
         if previous_response is None:
             """This is for the first Node i.e Databroker in the pipeline which according to ai4eu container 
@@ -262,17 +271,17 @@ class GenericOrchestrator:
             if current_node == num_nodes:
                 """continue message dispatching through the pipeline until data broker(Input Node) is exhausted"""
                 current_node = 0
-            self.link_nodes(bfs_list, pipe_line, p, stubs, num_nodes, current_node=current_node,
+            self.link_nodes(bfs_list, pipe_line, p, num_nodes, current_node=current_node,
                             previous_response=response_1)
 
-    def execute_pipeline(self, blueprint, dockerinfo):
+    def execute_pipeline(self, blueprint, dockerinfo, rpc_service_map):
         """Start Pipeline Excecution
         :arg
             blueprint(string): Path of blueprint.json
             dockerinfo(string): Path of dockerinfo.json
         """
 
-        stubs = self.get_all_stubs("work_dir/pipeline_pb2_grpc.py")
+        # stubs = self.get_all_stubs("work_dir/pipeline_pb2_grpc.py")
 
         """create pipeline reader instance"""
         p = PipelineReader(blueprint, dockerinfo)
@@ -314,7 +323,7 @@ class GenericOrchestrator:
                     graph.add_edge(nodes[i], adj_list[j])
 
         print("\n")
-        print("adjacency list after edding edges")
+        print("adjacency list after adding edges")
         graph.print_adj_list()
 
         """get all node properties"""
@@ -325,6 +334,10 @@ class GenericOrchestrator:
 
         print("\n")
 
+        stubs = self.get_all_stubs("work_dir/pipeline_pb2_grpc.py")
+
+        self.find_stub_for_node(stubs, pipe_line, p, rpc_service_map)
+
         """Graph Traversal using BFS Algorithm"""
         bfs_list = self.bfs_traversal(graph.adj_list, input_node.node_name)
 
@@ -332,4 +345,7 @@ class GenericOrchestrator:
         num_nodes = p.total_Nodes
 
         """Using Recursion to link nodes in a pipeline"""
-        self.link_nodes(bfs_list, pipe_line, p, stubs, num_nodes, current_node=0, previous_response=None)
+        self.link_nodes(bfs_list, pipe_line, p, num_nodes, current_node=0, previous_response=None)
+
+
+

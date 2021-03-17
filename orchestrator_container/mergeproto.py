@@ -24,9 +24,32 @@ class ProtoMerger:
     messages = {}
     services = {}
     proto_files = []
+    rpc_service_map = {}
 
     def __init__(self, files):
         self.proto_files = files
+
+    def prepare_map_service_rpc(self):
+
+        rpc_method_name = ""
+        service_name = ""
+
+        for file in self.proto_files:
+            file_path = os.path.join("work_dir/" + file)
+            for line in open(file_path, "r"):
+                if "rpc" in line:
+                    split1 = line.split()
+                    split2 = split1[1].split("(")
+                    rpc_method_name = split2[0]
+
+                if "service" in line:
+                    var1 = line.split()
+                    service_name = var1[1]
+
+                if rpc_method_name and service_name:
+                    self.rpc_service_map[rpc_method_name] = service_name + "Stub"
+                    rpc_method_name = ""
+                    service_name = ""
 
     def check_duplicate_in_dict(self, dict):
         """
@@ -136,5 +159,4 @@ class ProtoComplier:
 
         subprocess.call(
             ['python3', '-m', 'grpc_tools.protoc', '-I.', '--python_out=.', '--grpc_python_out=.', protofile])
-
 
