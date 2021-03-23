@@ -90,7 +90,6 @@ class PipelineReader(object):
         """extract node port information from dockerinfo.json"""
         value6 = json_extract(self.port_info['docker_info_list'][i], "port")
         value7 = json_extract(self.port_info['docker_info_list'][i], "ip_address")
-        # port = "172.17.0.1:" + str(value6[0])
         port = str(value7[0]) + ":" + str(value6[0])
 
         return nodename, protobuf_loc, service_name, input_msg, output_msg, port
@@ -183,12 +182,9 @@ class GenericOrchestrator:
         return index_to_return
 
     def find_stub_for_node(self, stubs, pipeline, p, rpc_service_map):
-
-        #service_list = list(rpc_service_map.values())
-        #break_flag = False
+        """Function to find the right stubs for a node"""
         for i in range(p.total_Nodes):
             for j in range(len(stubs)):
-                #stub_str = service_list[j] + "Stub"
                 if rpc_service_map[pipeline[i].service_name] == stubs[j]:
                     pipeline[i].stub = stubs[j]
 
