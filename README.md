@@ -8,19 +8,19 @@ To execute a pipeline, follow the following steps:
 1) extract the solution.zip.
 2) Run kubernetes client script to deploy all the services in your kubernetes namespace. 
 
-   '''python
+   ```python
      python3 kubernetes-client-script.py
-   '''
+   ```
    
 3) Verify the deployment.
 
-   '''sh
+   ```sh
       kubectl -n yournamespace get all
-   '''   
+   ```   
    
 4) Run the orchestrator client script in your local environment.
 
-   '''python
+   ```python
       cd orchestrator_client
       python3 orchestrator_client.py ip_address:nodeport
-   '''   
+   ```   
