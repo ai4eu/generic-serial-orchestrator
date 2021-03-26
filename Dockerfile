@@ -26,6 +26,7 @@ RUN apt-get update \
     nano
 
 RUN export PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Make python3 default
 RUN ln -s /usr/bin/python3 /usr/bin/python \

@@ -65,6 +65,7 @@ class PipelineReader(object):
 
         return node_name, service_name
 
+
     def get_nodes(self, i):
         values1 = json_extract(self.data['nodes'][i], "container_name")
         node_name = values1[0]

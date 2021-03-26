@@ -26,7 +26,7 @@ import orchestrator_pb2_grpc
 # import the function we made :
 import start_orchestrator as so
 
-port = 50090
+port = 8061
 
 
 # create a class to define the server functions, derived from
