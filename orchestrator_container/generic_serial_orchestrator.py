@@ -38,7 +38,6 @@ class Node(object):
 class InputNode(object):
     """A Simple Class for Input Node of the Pipeline"""
     node_name = ""
-    service_name = ""
 
 
 class PipelineReader(object):
@@ -57,13 +56,10 @@ class PipelineReader(object):
             self.port_info = json.load(f)
 
     def get_input_node(self):
-        value = json_extract(self.data['input_ports'][0], "container_name")
+        value = json_extract(self.data['nodes'][0], "container_name")
         node_name = value[0]
 
-        value1 = json_extract(self.data['input_ports'][0]['operation_signature'], "operation_name")
-        service_name = value1[0]
-
-        return node_name, service_name
+        return node_name
 
 
     def get_nodes(self, i):
@@ -293,7 +289,7 @@ class GenericOrchestrator:
         print("Total number of nodes in pipeline", p.total_Nodes)
 
         input_node = InputNode()
-        input_node.node_name, input_node.service_name = p.get_input_node()
+        input_node.node_name = p.get_input_node()
 
         for i in range(p.total_Nodes):
             """get all nodes and their adjacent nodes in the pipeline"""
