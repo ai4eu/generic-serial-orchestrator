@@ -24,3 +24,9 @@ To execute a pipeline, follow the following steps:
       cd orchestrator_client
       python3 orchestrator_client.py ip_address:nodeport
    ```   
+
+5) To view the orchestrator ouput
+
+   ```sh
+       kubectl -n yournamespace logs podname_of_orchestrator
+   '''
