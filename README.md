@@ -29,4 +29,4 @@ To execute a pipeline, follow the following steps:
 
    ```sh
        kubectl -n yournamespace logs podname_of_orchestrator
-   '''
+   ```    
