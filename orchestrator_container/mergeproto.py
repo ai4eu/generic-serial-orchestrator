@@ -37,12 +37,12 @@ class ProtoMerger:
         for file in self.proto_files:
             file_path = os.path.join("work_dir/" + file)
             for line in open(file_path, "r"):
-                if "rpc" in line:
+                if "rpc" in line and "//" not in line:
                     split1 = line.split()
                     split2 = split1[1].split("(")
                     rpc_method_name = split2[0]
 
-                if "service" in line:
+                if "service" in line and "//" not in line:
                     var1 = line.split()
                     service_name = var1[1]
 
@@ -98,12 +98,12 @@ class ProtoMerger:
                         flag_message = False
                         ser_value.clear()
 
-                if "message" in line:
+                if "message" in line and "//" not in line:
                     flag_service = False
                     key = line
                     flag_message = True
 
-                if "service" in line:
+                if "service" in line and "//" not in line:
                     flag_message = False
                     key = line
                     flag_service = True
@@ -159,4 +159,4 @@ class ProtoComplier:
 
         subprocess.call(
             ['python3', '-m', 'grpc_tools.protoc', '-I.', '--python_out=.', '--grpc_python_out=.', protofile])
-
+        
