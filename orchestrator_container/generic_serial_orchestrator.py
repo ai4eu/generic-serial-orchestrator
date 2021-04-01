@@ -216,7 +216,8 @@ class GenericOrchestrator:
         stub_method = getattr(pb2_grpc, pipe_line[i].stub)
         stub = stub_method(channel)
 
-        if i == 0:
+        if pipe_line[i].input_msg == "google.protobuf.Empty" or pipe_line[i].input_msg == "Empty" or \
+                pipe_line[i].input_msg == "empty":
             request_method = empty_pb2.Empty
         else:
             request_method = getattr(pb2, pipe_line[i].input_msg)
@@ -288,8 +289,6 @@ class GenericOrchestrator:
 
         print("Total number of nodes in pipeline", p.total_Nodes)
 
-        input_node = InputNode()
-        input_node.node_name = p.get_input_node()
 
         for i in range(p.total_Nodes):
             """get all nodes and their adjacent nodes in the pipeline"""
@@ -298,6 +297,7 @@ class GenericOrchestrator:
 
             adj_node = p.get_adjacent_nodes(i)
             adj_nodes.append(adj_node)
+
 
         """create a instance of class Graph"""
         graph = Graph(nodes)
@@ -326,7 +326,12 @@ class GenericOrchestrator:
                 = p.get_node_properties(i)
 
         print("\n")
-
+        
+        for i in range(p.total_Nodes):
+            if pipe_line[i].input_msg == "Empty" or pipe_line[i].input_msg == "google.protobuf.Empty":
+                input_node = InputNode()
+                input_node.node_name = pipe_line[i].node_name
+       
         stubs = self.get_all_stubs("work_dir/pipeline_pb2_grpc.py")
 
         self.find_stub_for_node(stubs, pipe_line, p, rpc_service_map)
@@ -339,6 +344,3 @@ class GenericOrchestrator:
 
         """Using Recursion to link nodes in a pipeline"""
         self.link_nodes(bfs_list, pipe_line, p, num_nodes, current_node=0, previous_response=None)
-
-
-
