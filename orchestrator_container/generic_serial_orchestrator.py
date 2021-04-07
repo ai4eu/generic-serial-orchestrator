@@ -59,6 +59,7 @@ class PipelineReader(object):
     data = {}  # blueprint json
     port_info = {}  # dockerinfo json
     operations = []  # flattened list of operations
+    operations_by_identifier = {}
     total_operations = 0
 
     def __init__(self, path, dockerinfo_path):
@@ -78,6 +79,7 @@ class PipelineReader(object):
             for node in self.data['nodes']
             for operation_signature in node['operation_signature_list']]
         self.total_operations = len(self.operations)
+        self.operations_by_identifier = {o.identifier(): o for o in self.operations}
 
         with open(dockerinfo_path) as f:
             self.port_info = json.load(f)
@@ -100,6 +102,9 @@ class PipelineReader(object):
 
     def get_operation(self, i) -> Operation:
         return self.operations[i]
+
+    def get_operation_by_identifier(self, identifier: str) -> Operation:
+        return self.operations_by_identifier[identifier]
 
     def get_node_port(self, i):
         """extract node port and stub information from dockerinfo.json"""
@@ -160,7 +165,7 @@ class GenericOrchestrator:
             parent[node] = None
             level[node] = -1
 
-        print(visited)
+        print('bfs_traversal: visited=', visited)
 
         source = input_node
         visited[source] = True
@@ -182,17 +187,17 @@ class GenericOrchestrator:
 
         return bfs_traversal_output
 
-    def find_node_in_pipeline(self, node, pipeline, p):
+    def find_operation_in_pipeline(self, operation, pipeline, p):
         """Function to find the index of the node the pipeline given the node name
         :argument:
-            node(str): Nodename
+            operation(str): Operation name
             pipeline(List): pipeline instance which contains list of node properties
         :returns
             index_to_return(int): Index of the node in list pipeline
         """
-        for i in range(p.total_Nodes):
+        for i in range(p.total_operations):
 
-            if node == pipeline[i].node_name:
+            if operation == pipeline[i].identifier():
                 index_to_return = i
                 break
 
@@ -225,7 +230,7 @@ class GenericOrchestrator:
         # print('get_all_stubs returns', stubs)
         return stubs
 
-    def start_node(self, i, pipe_line, p):
+    def start_operation(self, i, pipe_line, p):
         """A generic Function to get port,stub,request and response for each node
         Input: Index of the node
         Output: Port address, stub method, request method, response method"""
@@ -248,10 +253,11 @@ class GenericOrchestrator:
         response_before_call = getattr(pb2, pipe_line[i].output_msg)
 
         response_method = getattr(stub, pipe_line[i].service_name)
+        print("getting response_method from stub", stub, 'using service name', pipe_line[i].service_name, 'on port', port)
 
         return request_method, response_method, response_before_call
 
-    def link_nodes(self, bfs_list, pipe_line, p, num_nodes, current_node=0, previous_response=None):
+    def link_operations(self, bfs_list, pipe_line, p, num_operations, current_operation=0, previous_response=None):
         """A Recursive function to link nodes in a pipeline
         :arg
             bfs_list(List): List containing BFS traversal for the graph created
@@ -262,8 +268,9 @@ class GenericOrchestrator:
             previous_response: response of the previous node
         """
 
-        i = self.find_node_in_pipeline(bfs_list[current_node], pipe_line, p)
-        request_method, response_method, response_before_call = self.start_node(i, pipe_line, p)
+        i = self.find_operation_in_pipeline(bfs_list[current_operation], pipe_line, p)
+        request_method, response_method, response_before_call = self.start_operation(i, pipe_line, p)
+        print('link_operations: request_method=',repr(request_method),'response_method=',repr(response_method),'response_before_call=',repr(response_before_call))
 
         if previous_response is None:
             """This is for the first Node i.e Databroker in the pipeline which according to ai4eu container 
@@ -276,7 +283,7 @@ class GenericOrchestrator:
             response_1 = response_method(previous_response)
 
         print("*********************************************")
-        print("Response of node", current_node)
+        print("Response of operation", current_operation)
         print(response_before)
         print(response_1)
 
@@ -284,11 +291,11 @@ class GenericOrchestrator:
          response after grpc call!!!"""
         if response_before != response_1:
             """Increment the count of current node and call the function recursively until all nodes are exhausted"""
-            current_node = current_node + 1
-            if current_node == num_nodes:
+            current_operation = current_operation + 1
+            if current_operation == num_operations:
                 """continue message dispatching through the pipeline until data broker(Input Node) is exhausted"""
-                current_node = 0
-            self.link_nodes(bfs_list, pipe_line, p, num_nodes, current_node=current_node,
+                current_operation = 0
+            self.link_nodes(bfs_list, pipe_line, p, num_operations, current_operation=current_operation,
                             previous_response=response_1)
 
     # this is the main (only) entry point into this class!
@@ -338,10 +345,9 @@ class GenericOrchestrator:
         self.find_stub_for_node(stubs, pipe_line, p, rpc_service_map)
 
         """Graph Traversal using BFS Algorithm"""
-        bfs_list = self.bfs_traversal(graph.adj_list, input_node.node_name)
+        bfs_list = self.bfs_traversal(graph.adj_list, input_operation.identifier())
 
         print("bfs output:", bfs_list)
-        num_nodes = p.total_Nodes
 
         """Using Recursion to link nodes in a pipeline"""
-        self.link_nodes(bfs_list, pipe_line, p, num_nodes, current_node=0, previous_response=None)
+        self.link_operations(bfs_list, pipe_line, p, p.total_operations, current_operation=0, previous_response=None)
