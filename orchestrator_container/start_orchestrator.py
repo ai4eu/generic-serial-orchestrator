@@ -25,11 +25,11 @@ import zipfile
 import glob
 
 curr_dir = os.getcwd()
-
+work_dir_path = os.path.join(curr_dir,"work_dir")
 
 def string_to_blueprint_json(text):
     """Converts text to json file"""
-    path = os.path.join(curr_dir + "/work_dir" + "/blueprint_gen.json")
+    path = os.path.join(work_dir_path,"blueprint_gen.json")
     text_file = open(path, "w")
     text_file.write(text)
     text_file.close()
@@ -37,7 +37,7 @@ def string_to_blueprint_json(text):
 
 def string_to_dockerinfo_json(text):
     """converts text to json file"""
-    path = os.path.join(curr_dir + "/work_dir" + "/dockerinfo_gen.json")
+    path = os.path.join(work_dir_path,"dockerinfo_gen.json")
     text_file = open(path, "w")
     text_file.write(text)
     text_file.close()
@@ -45,7 +45,7 @@ def string_to_dockerinfo_json(text):
 
 def bytes_to_zip(bytestream):
     """Converts bytes to file"""
-    path = os.path.join(curr_dir + "/work_dir" + "/pipeline_proto.zip")
+    path = os.path.join(work_dir_path,"pipeline_proto.zip")
     f = open(path, "wb")
     f.write(bytestream)
     f.close()
@@ -53,7 +53,7 @@ def bytes_to_zip(bytestream):
 
 def extract_zip(file):
     """extracts the zip file to a file directory"""
-    path = os.path.join(curr_dir + "/work_dir/" + file)
+    path = os.path.join(work_dir_path,file)
     with zipfile.ZipFile(path, 'r') as zip_ref:
         zip_ref.extractall("work_dir")
 
@@ -122,3 +122,4 @@ def executePipeline(blueprint, dockerinfo, protoszip):
         print(status_msg)
 
     return status, status_msg
+
