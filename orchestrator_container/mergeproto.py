@@ -83,7 +83,8 @@ class ProtoMerger:
             for line in open(file_path, "r"):
 
                 if flag_message:
-                    msg_value.append(line)
+                    if "//" not in line:
+                        msg_value.append(line)
                     if line == '}\n' or line == '}' or line == '}\t\n':
                         all_values = ''.join(map(str, msg_value))
                         self.messages[key] = all_values
@@ -91,19 +92,20 @@ class ProtoMerger:
                         msg_value.clear()
 
                 if flag_service:
-                    ser_value.append(line)
+                    if "//" not in line:
+                        ser_value.append(line)
                     if line == '}\n' or line == '}' or line == '}\t\n':
                         all_values = ''.join(map(str, ser_value))
                         self.services[key] = all_values
                         flag_message = False
                         ser_value.clear()
 
-                if "message" in line and "//" not in line:
+                if "message" in line and "//" not in line and (not flag_message):
                     flag_service = False
                     key = line
                     flag_message = True
 
-                if "service" in line and "//" not in line:
+                if "service" in line and "//" not in line and (not flag_service):
                     flag_message = False
                     key = line
                     flag_service = True
