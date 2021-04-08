@@ -37,19 +37,22 @@ class ProtoMerger:
         for file in self.proto_files:
             file_path = os.path.join("work_dir/" + file)
             for line in open(file_path, "r"):
+                # print('prepare_map_service_rpc reading', line.strip())
                 if "rpc" in line and "//" not in line:
                     split1 = line.split()
                     split2 = split1[1].split("(")
                     rpc_method_name = split2[0]
+                    # print('prepare_map_service_rpc rpc', rpc_method_name)
 
                 if "service" in line and "//" not in line:
                     var1 = line.split()
                     service_name = var1[1]
+                    # print('prepare_map_service_rpc service', service_name)
 
                 if rpc_method_name and service_name:
+                    # print('prepare_map_service_rpc found stub!')
                     self.rpc_service_map[rpc_method_name] = service_name + "Stub"
                     rpc_method_name = ""
-                    service_name = ""
 
     def check_duplicate_in_dict(self, dict):
         """

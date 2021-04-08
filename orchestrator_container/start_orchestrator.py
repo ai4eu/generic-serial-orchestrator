@@ -23,6 +23,8 @@ import generic_serial_orchestrator as orch
 import mergeproto as mp
 import zipfile
 import glob
+import sys
+import traceback
 
 curr_dir = os.getcwd()
 work_dir_path = os.path.join(curr_dir,"work_dir")
@@ -102,24 +104,20 @@ def executePipeline(blueprint, dockerinfo, protoszip):
         pc.generate_pb2_pb2c(proto_path)
 
         rpc_service_map = merge_cls.rpc_service_map
-        try:
-            """Call the orchestrator"""
-            orchestrator = orch.GenericOrchestrator()
-            dockerinfo_path = "work_dir/dockerinfo_gen.json"
-            blueprint_path = "work_dir/blueprint_gen.json"
-            orchestrator.execute_pipeline(blueprint_path, dockerinfo_path, rpc_service_map)
-            status = 200
-            status_msg = "Orchestrator successfully started"
 
-        except Exception as e:
-            status = 400
-            status_msg = e
-            print(status_msg)
+        """Call the orchestrator"""
+        orchestrator = orch.GenericOrchestrator()
+        dockerinfo_path = "work_dir/dockerinfo_gen.json"
+        blueprint_path = "work_dir/blueprint_gen.json"
+        orchestrator.execute_pipeline(blueprint_path, dockerinfo_path, rpc_service_map)
+        status = 200
+        status_msg = "Orchestrator successfully started"
 
     except Exception as e:
         status = 400
         status_msg = e
-        print(status_msg)
+        print('executePipeline status:', status_msg, traceback.format_exc())
+        sys.stdout.flush()
 
     return status, status_msg
 
