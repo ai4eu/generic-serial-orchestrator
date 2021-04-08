@@ -295,7 +295,7 @@ class GenericOrchestrator:
             if current_operation == num_operations:
                 """continue message dispatching through the pipeline until data broker(Input Node) is exhausted"""
                 current_operation = 0
-            self.link_nodes(bfs_list, pipe_line, p, num_operations, current_operation=current_operation,
+            self.link_operations(bfs_list, pipe_line, p, num_operations, current_operation=current_operation,
                             previous_response=response_1)
 
     # this is the main (only) entry point into this class!
