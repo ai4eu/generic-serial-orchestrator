@@ -27,6 +27,13 @@ import glob
 curr_dir = os.getcwd()
 work_dir_path = os.path.join(curr_dir,"work_dir")
 
+try:
+    if not os.path.exists('work_dir'):
+        os.makedirs(work_dir_path)
+except OSError as e:
+    print ("Creation of the directory %s failed" % work_dir_path)
+
+
 def string_to_blueprint_json(text):
     """Converts text to json file"""
     path = os.path.join(work_dir_path,"blueprint_gen.json")
