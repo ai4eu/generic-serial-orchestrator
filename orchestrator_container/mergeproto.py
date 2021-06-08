@@ -88,7 +88,7 @@ class ProtoMerger:
                 if flag_message:
                     if "//" not in line:
                         msg_value.append(line)
-                    if if "}" in line::
+                    if  "}" in line::
                         all_values = ''.join(map(str, msg_value))
                         self.messages[key] = all_values
                         flag_message = False
@@ -97,7 +97,7 @@ class ProtoMerger:
                 if flag_service:
                     if "//" not in line:
                         ser_value.append(line)
-                    if if "}" in line::
+                    if  "}" in line::
                         all_values = ''.join(map(str, ser_value))
                         self.services[key] = all_values
                         flag_message = False
