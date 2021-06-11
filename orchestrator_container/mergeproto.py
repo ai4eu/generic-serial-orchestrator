@@ -54,19 +54,6 @@ class ProtoMerger:
                     self.rpc_service_map[rpc_method_name] = service_name + "Stub"
                     rpc_method_name = ""
 
-    def check_duplicate_in_dict(self, dict):
-        """
-
-        :param dict: Dictionary
-        :return: True if duplicates exist else False
-        """
-        rev_multidict = {}
-        for key, value in dict.items():
-            rev_multidict.setdefault(value, set()).add(key)
-        duplicate = [key for key, values in rev_multidict.items() if len(values) > 1]
-        if len(duplicate) > 0:
-            return True
-
     def prepare_dict(self):
         """
 
@@ -88,7 +75,7 @@ class ProtoMerger:
                 if flag_message:
                     if "//" not in line:
                         msg_value.append(line)
-                    if  "}" in line::
+                    if "}" in line:
                         all_values = ''.join(map(str, msg_value))
                         self.messages[key] = all_values
                         flag_message = False
@@ -97,10 +84,10 @@ class ProtoMerger:
                 if flag_service:
                     if "//" not in line:
                         ser_value.append(line)
-                    if  "}" in line::
+                    if "}" in line:
                         all_values = ''.join(map(str, ser_value))
                         self.services[key] = all_values
-                        flag_message = False
+                        flag_service = False
                         ser_value.clear()
 
                 if "message" in line and "//" not in line and (not flag_message):
@@ -131,24 +118,15 @@ class ProtoMerger:
         outfile.write(init_line)
         outfile.write(data_broker_line)
 
-        dup = self.check_duplicate_in_dict(messages)
-        if dup:
-            print("Input Protobufs are inconsistent")
-        else:
-            for key, value in messages.items():
-                key_value = key + "\n" + value
-                outfile.write(key_value)
-                outfile.write("\n")
+        for key, value in messages.items():
+            key_value = key + "\n" + value
+            outfile.write(key_value)
+            outfile.write("\n")
 
-        dup = self.check_duplicate_in_dict(services)
-
-        if dup:
-            print("Input Protobufs are inconsistent")
-        else:
-            for key, value in services.items():
-                key_value = key + "\n" + value
-                outfile.write(key_value)
-                outfile.write("\n")
+        for key, value in services.items():
+            key_value = key + "\n" + value
+            outfile.write(key_value)
+            outfile.write("\n")
         print("Proto Files successfully merged...!")
         outfile.close()
 
@@ -164,4 +142,3 @@ class ProtoComplier:
 
         subprocess.call(
             ['python3', '-m', 'grpc_tools.protoc', '-I.', '--python_out=.', '--grpc_python_out=.', protofile])
-        
