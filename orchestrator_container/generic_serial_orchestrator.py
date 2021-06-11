@@ -96,7 +96,9 @@ class PipelineReader(object):
             if operation.input_msg in EMPTIES]
 
         if len(operations_with_empty_input) != 1:
-            raise Exception("this orchestrator can only process pipelines with one data provider = one operation with Empty input, found %d" % len(operations_with_empty_input))
+            raise Exception(
+                "this orchestrator can only process pipelines with one data provider = one operation with Empty input, found %d" % len(
+                    operations_with_empty_input))
 
         return operations_with_empty_input[0]
 
@@ -250,12 +252,13 @@ class GenericOrchestrator:
         else:
             request_method = getattr(pb2, pipe_line[i].input_msg)
 
-        response_before_call = getattr(pb2, pipe_line[i].output_msg)
+        # response_before_call = getattr(pb2, pipe_line[i].output_msg)
 
         response_method = getattr(stub, pipe_line[i].service_name)
-        print("getting response_method from stub", stub, 'using service name', pipe_line[i].service_name, 'on port', port)
+        print("getting response_method from stub", stub, 'using service name', pipe_line[i].service_name, 'on port',
+              port)
 
-        return request_method, response_method, response_before_call
+        return request_method, response_method
 
     def link_operations(self, bfs_list, pipe_line, p, num_operations, current_operation=0, previous_response=None):
         """A Recursive function to link nodes in a pipeline
@@ -267,36 +270,44 @@ class GenericOrchestrator:
             current_node(int): Index of current node
             previous_response: response of the previous node
         """
-
+        grpc_exception_flag = False
         i = self.find_operation_in_pipeline(bfs_list[current_operation], pipe_line, p)
-        request_method, response_method, response_before_call = self.start_operation(i, pipe_line, p)
-        print('link_operations: request_method=',repr(request_method),'response_method=',repr(response_method),'response_before_call=',repr(response_before_call))
+        request_method, response_method = self.start_operation(i, pipe_line, p)
+        print('link_operations: request_method=', repr(request_method), 'response_method=', repr(response_method))
 
         if previous_response is None:
             """This is for the first Node i.e Databroker in the pipeline which according to ai4eu container 
             specification has empty input type"""
             request_1 = request_method()
-            response_1 = response_method(request_1)
-            response_before = response_before_call()
+            try:
+                response_1 = response_method(request_1)
+            except grpc.RpcError as rpc_error_call:
+                if str(rpc_error_call.code()) == "StatusCode.NOT_FOUND" or \
+                        str(rpc_error_call.code()) == "grpc.StatusCode.OUT_OF_RANGE":
+                    grpc_exception_flag = True
+                print("errcode=" + str(rpc_error_call.code()))
+                print("message=" + rpc_error_call.details())
         else:
-            response_before = response_before_call()
-            response_1 = response_method(previous_response)
+            try:
+                response_1 = response_method(previous_response)
+            except grpc.RpcError as rpc_error_call:
+                if str(rpc_error_call.code()) == "StatusCode.NOT_FOUND" or \
+                        str(rpc_error_call.code()) == "grpc.StatusCode.OUT_OF_RANGE":
+                    grpc_exception_flag = True
+                print("errcode=" + str(rpc_error_call.code()))
+                print("message=" + rpc_error_call.details())
 
         print("*********************************************")
         print("Response of operation", current_operation)
-        print(response_before)
-        print(response_1)
 
-        """Our termination case out of recursive function is when response before grpc call is equal to 
-         response after grpc call!!!"""
-        if response_before != response_1:
-            """Increment the count of current node and call the function recursively until all nodes are exhausted"""
+        if not grpc_exception_flag:
+            print(response_1)
             current_operation = current_operation + 1
             if current_operation == num_operations:
                 """continue message dispatching through the pipeline until data broker(Input Node) is exhausted"""
                 current_operation = 0
             self.link_operations(bfs_list, pipe_line, p, num_operations, current_operation=current_operation,
-                            previous_response=response_1)
+                                 previous_response=response_1)
 
     # this is the main (only) entry point into this class!
     def execute_pipeline(self, blueprint, dockerinfo, rpc_service_map):
@@ -305,9 +316,6 @@ class GenericOrchestrator:
             blueprint(string): Path of blueprint.json
             dockerinfo(string): Path of dockerinfo.json
         """
-
-        # print('rpc_service_map=', rpc_service_map)
-        # stubs = self.get_all_stubs("work_dir/pipeline_pb2_grpc.py")
 
         """create pipeline reader instance"""
         p = PipelineReader(blueprint, dockerinfo)
@@ -351,3 +359,4 @@ class GenericOrchestrator:
 
         """Using Recursion to link nodes in a pipeline"""
         self.link_operations(bfs_list, pipe_line, p, p.total_operations, current_operation=0, previous_response=None)
+
