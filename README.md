@@ -17,6 +17,7 @@ To execute a pipeline, follow the following steps:
    ```sh
       kubectl -n yournamespace get all
    ```   
+   Verify that all the pods to be in "Running" state.
    
 4) Run the orchestrator client script in your local environment.
 
